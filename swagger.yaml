@@ -1,0 +1,428 @@
+openapi: 3.0.0
+info:
+  title: Store & Forward API (WAGS)
+  version: v1.0.0
+  description: API for queueing and sending messages.
+  contact:
+    name: API Support
+    url: http://www.example.com/support
+    email: support@example.com
+servers:
+  - url: http://localhost:8080/api # Ganti dengan URL deploy Anda
+    description: Development server
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-Api-Key
+  schemas:
+    UserLogin:
+      type: object
+      required:
+        - username
+        - key
+      properties:
+        username:
+          type: string
+          example: "telkomsel"
+        key:
+          type: string
+          format: password
+          example: "your-api-key"
+    LoginResponse:
+      type: object
+      properties:
+        username:
+          type: string
+          example: "telkomsel"
+        key:
+          type: string
+          example: "your-api-key"
+        message:
+          type: string
+          example: "Login successful"
+
+    SingleMessageRequest:
+      type: object
+      required:
+        - recipient
+        - sender # Ini sebaiknya didapat dari user yang terautentikasi, bukan dari body
+        - message
+        - dt_store
+      properties:
+        recipient:
+          type: string
+          example: "628123456789"
+          description: Nomor telepon penerima.
+        sender:
+          type: string
+          example: "telkomsel" # Idealnya ini adalah username yang terautentikasi
+          description: ID Pengirim (username).
+        message:
+          type: string
+          example: "Hello, this is a test message!"
+        dt_store:
+          type: string
+          format: date-time
+          example: "2025-05-10 14:30:00"
+          description: Waktu pesan disimpan oleh client (YYYY-MM-DD HH:mm:ss).
+
+    SingleMessageResponse:
+      type: object
+      properties:
+        message_id:
+          type: integer
+          example: 101
+        status:
+          type: string
+          example: "PENDING"
+        dt_queue:
+          type: string
+          format: date-time
+          example: "2025-05-10 14:30:05"
+        info:
+          type: string
+          example: "Message queued successfully."
+
+    BulkMessageRequest:
+      type: object
+      required:
+        - sender # Ini sebaiknya didapat dari user yang terautentikasi
+        - recipients
+        - message
+        - dt_store
+      properties:
+        sender:
+          type: string
+          example: "telkomsel" # Idealnya ini adalah username yang terautentikasi
+          description: ID Pengirim (username).
+        recipients:
+          type: array
+          items:
+            type: string
+          example: ["628123456789", "628987654321"]
+          description: Daftar nomor telepon penerima.
+        message:
+          type: string
+          example: "Hello, world bulk message!"
+        dt_store:
+          type: string
+          format: date-time
+          example: "2025-05-10 15:00:00"
+          description: Waktu pesan disimpan oleh client (YYYY-MM-DD HH:mm:ss).
+
+    BulkMessageResponse:
+      type: object
+      properties:
+        bulk_message_id:
+          type: integer
+          example: 22
+        status:
+          type: string
+          example: "PROCESS"
+        info:
+          type: string
+          example: "Bulk message received and is being processed."
+
+    MessageView:
+      type: object
+      properties:
+        id:
+          type: integer
+        recipient:
+          type: string
+        status:
+          type: string
+        broadcast_message:
+          type: string
+          example: "YES" # atau "NO"
+        dt_store:
+          type: string
+          format: "dd-MM-yy HH:mm:ss"
+        dt_queue:
+          type: string
+          format: "dd-MM-yy HH:mm:ss"
+        dt_send:
+          type: string
+          format: "dd-MM-yy HH:mm:ss"
+          nullable: true
+        message:
+          type: string
+
+    MessageBulkView:
+      type: object
+      properties:
+        id:
+          type: integer
+        sender:
+          type: string
+        status:
+          type: string
+        dt_store:
+          type: string
+          format: "dd-MM-yy HH:mm:ss"
+        dt_convert:
+          type: string
+          format: "dd-MM-yy HH:mm:ss"
+          nullable: true
+        # bulk_content: # Mungkin tidak perlu ditampilkan di list utama
+        #   type: object
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          example: "Invalid input"
+        details:
+          type: string
+          nullable: true
+
+paths:
+  /auth/login:
+    post:
+      tags:
+        - Authentication
+      summary: Login user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserLogin"
+      responses:
+        "200":
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoginResponse"
+        "400":
+          description: Invalid credentials or bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /messages/send:
+    post:
+      tags:
+        - Messages
+      summary: Send a single message
+      description: Antrikan satu pesan untuk dikirim. `sender` dalam body akan diabaikan jika menggunakan autentikasi berbasis token/session, dan akan diambil dari user yang terautentikasi.
+      security:
+        - ApiKeyAuth: [] # Atau mekanisme auth lain
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SingleMessageRequest"
+      responses:
+        "201":
+          description: Message queued
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SingleMessageResponse"
+        "400":
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /messages/send-bulk:
+    post:
+      tags:
+        - Messages
+      summary: Send a bulk message
+      description: |
+        Antrikan satu permintaan bulk message untuk dikonversi menjadi pesan individual.
+        `sender` dalam body akan diabaikan jika menggunakan autentikasi, dan akan diambil dari user yang terautentikasi.
+        Sistem akan menggunakan penjadwalan cerdas dengan waktu delay acak antara pesan-pesan untuk menghindari deteksi sebagai bot.
+        Maksimal 100 pesan per menit akan dikirim untuk menghindari rate limiting.
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BulkMessageRequest"
+      responses:
+        "202":
+          description: Bulk message accepted for processing
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BulkMessageResponse"
+        "400":
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  # Endpoints untuk Frontend UI
+  /ui/messages:
+    get:
+      tags:
+        - UI Data
+      summary: Get list of messages (for UI)
+      security:
+        - ApiKeyAuth: [] # Asumsi UI juga butuh auth
+      parameters:
+        - name: month
+          in: query
+          required: false # Jika 'all', maka year wajib
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 12
+          description: Filter by month (1-12). Kosongkan atau 'all' untuk semua bulan dalam setahun.
+        - name: year
+          in: query
+          required: true
+          schema:
+            type: integer
+            example: 2025
+          description: Filter by year.
+        - name: sender_filter # Opsional, jika ingin filter per sender di UI
+          in: query
+          required: false
+          schema:
+            type: string
+          description: Filter by sender username (admin only or specific use case).
+      responses:
+        "200":
+          description: A list of messages
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MessageView"
+        "401":
+          description: Unauthorized
+        "500":
+          description: Internal server error
+
+  /ui/broadcasts:
+    get:
+      tags:
+        - UI Data
+      summary: Get list of bulk messages (for UI)
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: month
+          in: query
+          required: false
+          schema:
+            type: integer
+          description: Filter by month (1-12).
+        - name: year
+          in: query
+          required: true
+          schema:
+            type: integer
+          description: Filter by year.
+      responses:
+        "200":
+          description: A list of bulk messages
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MessageBulkView"
+        "401":
+          description: Unauthorized
+        "500":
+          description: Internal server error
+
+  /ui/years:
+    get:
+      tags:
+        - UI Data
+      summary: Get list of available years for filtering
+      description: Returns a list of unique years found in message and message_bulk tables for the current user. Used to populate year filter dropdowns.
+      security:
+        - ApiKeyAuth: []
+      responses:
+        "200":
+          description: A list of available years
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: integer
+                example: [2025, 2024, 2023]
+        "401":
+          description: Unauthorized
+        "500":
+          description: Internal server error
+
+  /ui/broadcasts/{bulk_id}/details:
+    get:
+      tags:
+        - UI Data
+      summary: Get details of a bulk message (individual messages sent)
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: bulk_id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: The ID of the bulk message.
+      responses:
+        "200":
+          description: A list of individual messages related to the bulk send
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MessageView" # Menggunakan format yang sama
+        "401":
+          description: Unauthorized
+        "404":
+          description: Bulk message not found
+        "500":
+          description: Internal server error

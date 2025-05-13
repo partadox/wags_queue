@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WAGS Queue System</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container-fluid" id="app">
+        <!-- Login Form -->
+        <div class="row vh-100 justify-content-center align-items-center" id="login-container">
+            <div class="col-md-6 col-lg-4">
+                <div class="card shadow">
+                    <div class="card-header bg-primary text-white">
+                        <h4 class="mb-0">WAGS Queue System</h4>
+                    </div>
+                    <div class="card-body">
+                        <form id="login-form">
+                            <div class="mb-3">
+                                <label for="username" class="form-label">Username</label>
+                                <input type="text" class="form-control" id="username" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="password" class="form-label">API Key</label>
+                                <input type="password" class="form-control" id="password" placeholder="Enter your API key" required>
+                            </div>
+                            <div class="d-grid">
+                                <button type="submit" class="btn btn-primary">Login</button>
+                            </div>
+                            <div class="alert alert-danger mt-3 d-none" id="login-error"></div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Application (hidden until login) -->
+        <div id="main-container" class="d-none">
+            <!-- Navbar -->
+            <nav class="navbar navbar-expand-lg navbar-dark bg-primary mb-4">
+                <div class="container-fluid">
+                    <a class="navbar-brand" href="#">WAGS Queue System</a>
+                    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                        <span class="navbar-toggler-icon"></span>
+                    </button>
+                    <div class="collapse navbar-collapse" id="navbarNav">
+                        <ul class="navbar-nav">
+                            <li class="nav-item">
+                                <a class="nav-link active" href="#" data-page="dashboard">Dashboard</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="#" data-page="send-message">Send Message</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="#" data-page="send-bulk">Send Broadcast</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="#" data-page="messages">Messages</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="#" data-page="broadcasts">Broadcasts</a>
+                            </li>
+                        </ul>
+                        <ul class="navbar-nav ms-auto">
+                            <li class="nav-item">
+                                <a class="nav-link" href="#" id="logout-btn">
+                                    <i class="bi bi-box-arrow-right"></i> Logout
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </nav>
+
+            <!-- Content Container -->
+            <div class="container">
+                <!-- Dashboard Page -->
+                <div class="page-content" id="dashboard-page">
+                    <h2>Dashboard</h2>
+                    <div class="row mt-4">
+                        <div class="col-md-4">
+                            <div class="card bg-primary text-white mb-4">
+                                <div class="card-body">
+                                    <h5>Total Messages</h5>
+                                    <h2 id="total-messages">-</h2>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card bg-success text-white mb-4">
+                                <div class="card-body">
+                                    <h5>Sent Messages</h5>
+                                    <h2 id="sent-messages">-</h2>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card bg-danger text-white mb-4">
+                                <div class="card-body">
+                                    <h5>Failed Messages</h5>
+                                    <h2 id="failed-messages">-</h2>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Send Message Page -->
+                <div class="page-content d-none" id="send-message-page">
+                    <h2>Send Message</h2>
+                    <div class="card mt-4">
+                        <div class="card-body">
+                            <form id="send-message-form">
+                                <div class="mb-3">
+                                    <label for="recipient" class="form-label">Recipient (Phone Number)</label>
+                                    <input type="text" class="form-control" id="recipient" required placeholder="e.g., 628123456789">
+                                </div>
+                                <div class="mb-3">
+                                    <label for="message-text" class="form-label">Message</label>
+                                    <textarea class="form-control" id="message-text" rows="5" required></textarea>
+                                </div>
+                                <div class="d-grid">
+                                    <button type="submit" class="btn btn-primary">Send Message</button>
+                                </div>
+                            </form>
+                            <div class="alert alert-success mt-3 d-none" id="send-message-success"></div>
+                            <div class="alert alert-danger mt-3 d-none" id="send-message-error"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Send Bulk Page -->
+                <div class="page-content d-none" id="send-bulk-page">
+                    <h2>Send Broadcast Message</h2>
+                    <div class="card mt-4">
+                        <div class="card-body">
+                            <form id="send-bulk-form">
+                                <div class="mb-3">
+                                    <label for="recipients" class="form-label">Recipients (One per line) <code>max. 100 recipient per boradcast</code></label>
+                                    <textarea class="form-control" id="recipients" rows="5" required placeholder="628123456789&#10;628987654321"></textarea>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="bulk-message-text" class="form-label">Message</label>
+                                    <textarea class="form-control" id="bulk-message-text" rows="5" required></textarea>
+                                </div>
+                                <div class="d-grid">
+                                    <button type="submit" class="btn btn-primary">Send Broadcast Message</button>
+                                </div>
+                            </form>
+                            <div class="alert alert-success mt-3 d-none" id="send-bulk-success"></div>
+                            <div class="alert alert-danger mt-3 d-none" id="send-bulk-error"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Messages Page -->
+                <div class="page-content d-none" id="messages-page">
+                    <h2>Messages</h2>
+                    <div class="card mt-4">
+                        <div class="card-body">
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <div class="input-group">
+                                        <select class="form-select" id="messages-year">
+                                            <option value="2025">2025</option>
+                                            <option value="2024">2024</option>
+                                            <option value="2023">2023</option>
+                                        </select>
+                                        <select class="form-select" id="messages-month">
+                                            <option value="all">All Months</option>
+                                            <option value="1">January</option>
+                                            <option value="2">February</option>
+                                            <option value="3">March</option>
+                                            <option value="4">April</option>
+                                            <option value="5">May</option>
+                                            <option value="6">June</option>
+                                            <option value="7">July</option>
+                                            <option value="8">August</option>
+                                            <option value="9">September</option>
+                                            <option value="10">October</option>
+                                            <option value="11">November</option>
+                                            <option value="12">December</option>
+                                        </select>
+                                        <button class="btn btn-primary" id="messages-filter-btn">Filter</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table table-striped table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>Recipient</th>
+                                            <th>Status</th>
+                                            <th>Broadcast</th>
+                                            <th>Store Date</th>
+                                            <th>Queue Date</th>
+                                            <th>Send Date</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="messages-table-body">
+                                        <!-- Messages will be populated here -->
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div id="messages-loading" class="text-center d-none">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Broadcasts Page -->
+                <div class="page-content d-none" id="broadcasts-page">
+                    <h2>Broadcasts</h2>
+                    <div class="card mt-4">
+                        <div class="card-body">
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <div class="input-group">
+                                        <select class="form-select" id="broadcasts-year">
+                                            <option value="2025">2025</option>
+                                            <option value="2024">2024</option>
+                                            <option value="2023">2023</option>
+                                        </select>
+                                        <select class="form-select" id="broadcasts-month">
+                                            <option value="all">All Months</option>
+                                            <option value="1">January</option>
+                                            <option value="2">February</option>
+                                            <option value="3">March</option>
+                                            <option value="4">April</option>
+                                            <option value="5">May</option>
+                                            <option value="6">June</option>
+                                            <option value="7">July</option>
+                                            <option value="8">August</option>
+                                            <option value="9">September</option>
+                                            <option value="10">October</option>
+                                            <option value="11">November</option>
+                                            <option value="12">December</option>
+                                        </select>
+                                        <button class="btn btn-primary" id="broadcasts-filter-btn">Filter</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table table-striped table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>Status</th>
+                                            <th>Store Date</th>
+                                            <th>Convert Date</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="broadcasts-table-body">
+                                        <!-- Broadcasts will be populated here -->
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div id="broadcasts-loading" class="text-center d-none">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Message Details Modal -->
+        <div class="modal fade" id="message-details-modal" tabindex="-1">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Message Details</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label">Recipient:</label>
+                            <div id="modal-recipient" class="form-control"></div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Status:</label>
+                            <div id="modal-status" class="form-control"></div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Message:</label>
+                            <div id="modal-message" class="form-control" style="min-height: 100px;"></div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Dates:</label>
+                            <table class="table table-sm">
+                                <tr>
+                                    <th>Store:</th>
+                                    <td id="modal-dt-store"></td>
+                                </tr>
+                                <tr>
+                                    <th>Queue:</th>
+                                    <td id="modal-dt-queue"></td>
+                                </tr>
+                                <tr>
+                                    <th>Send:</th>
+                                    <td id="modal-dt-send"></td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Broadcast Details Modal -->
+        <div class="modal fade" id="broadcast-details-modal" tabindex="-1">
+            <div class="modal-dialog modal-xl">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Broadcast Details</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Recipient</th>
+                                        <th>Status</th>
+                                        <th>Store Date</th>
+                                        <th>Queue Date</th>
+                                        <th>Send Date</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="broadcast-details-table-body">
+                                    <!-- Broadcast details will be populated here -->
+                                </tbody>
+                            </table>
+                        </div>
+                        <div id="broadcast-details-loading" class="text-center d-none">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>
