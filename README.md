@@ -182,12 +182,12 @@ Here's how to integrate with the WAGS Queue System from a PHP application:
 // Authentication and getting API key
 function getApiKey($username, $apiKey) {
     $url = 'http://localhost:8080/api/auth/login';
-    
+
     $data = array(
         'username' => $username,
         'key' => $apiKey
     );
-    
+
     $options = array(
         'http' => array(
             'header'  => "Content-type: application/json\r\n",
@@ -195,14 +195,14 @@ function getApiKey($username, $apiKey) {
             'content' => json_encode($data)
         )
     );
-    
+
     $context  = stream_context_create($options);
     $result = file_get_contents($url, false, $context);
-    
-    if ($result === FALSE) { 
-        throw new Exception('Authentication failed'); 
+
+    if ($result === FALSE) {
+        throw new Exception('Authentication failed');
     }
-    
+
     $response = json_decode($result, true);
     return $response;
 }
@@ -225,13 +225,13 @@ try {
 <?php
 function sendMessage($apiKey, $recipient, $message) {
     $url = 'http://localhost:8080/api/messages/send';
-    
+
     $data = array(
         'recipient' => $recipient,
         'message' => $message,
-        'dt_store' => date('Y-m-d H:i:s')
+        'dt_store' => date('Y-m-d\TH:i:s.') . substr(microtime(), 2, 3) . 'Z'
     );
-    
+
     $options = array(
         'http' => array(
             'header'  => "Content-type: application/json\r\n" .
@@ -240,14 +240,14 @@ function sendMessage($apiKey, $recipient, $message) {
             'content' => json_encode($data)
         )
     );
-    
+
     $context = stream_context_create($options);
     $result = file_get_contents($url, false, $context);
-    
-    if ($result === FALSE) { 
-        throw new Exception('Failed to send message'); 
+
+    if ($result === FALSE) {
+        throw new Exception('Failed to send message');
     }
-    
+
     return json_decode($result, true);
 }
 
@@ -267,13 +267,13 @@ try {
 <?php
 function sendBulkMessage($apiKey, $recipients, $message) {
     $url = 'http://localhost:8080/api/messages/send-bulk';
-    
+
     $data = array(
         'recipients' => $recipients,
         'message' => $message,
-        'dt_store' => date('Y-m-d H:i:s')
+        'dt_store' => date('Y-m-d\TH:i:s.') . substr(microtime(), 2, 3) . 'Z'
     );
-    
+
     $options = array(
         'http' => array(
             'header'  => "Content-type: application/json\r\n" .
@@ -282,14 +282,14 @@ function sendBulkMessage($apiKey, $recipients, $message) {
             'content' => json_encode($data)
         )
     );
-    
+
     $context = stream_context_create($options);
     $result = file_get_contents($url, false, $context);
-    
-    if ($result === FALSE) { 
-        throw new Exception('Failed to send bulk message'); 
+
+    if ($result === FALSE) {
+        throw new Exception('Failed to send bulk message');
     }
-    
+
     return json_decode($result, true);
 }
 
@@ -312,15 +312,15 @@ If you prefer using cURL for API requests, here's an alternative approach:
 <?php
 function sendMessageWithCurl($apiKey, $recipient, $message) {
     $url = 'http://localhost:8080/api/messages/send';
-    
+
     $data = array(
         'recipient' => $recipient,
         'message' => $message,
         'dt_store' => date('Y-m-d H:i:s')
     );
-    
+
     $ch = curl_init($url);
-    
+
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     curl_setopt($ch, CURLOPT_POST, true);
     curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
@@ -328,14 +328,14 @@ function sendMessageWithCurl($apiKey, $recipient, $message) {
         'Content-Type: application/json',
         'X-Api-Key: ' . $apiKey
     ));
-    
+
     $response = curl_exec($ch);
     $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    
+
     if (curl_errno($ch) || $httpCode >= 400) {
         throw new Exception('API request failed: ' . curl_error($ch) . ' HTTP code: ' . $httpCode);
     }
-    
+
     curl_close($ch);
     return json_decode($response, true);
 }

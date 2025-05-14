@@ -66,8 +66,8 @@ components:
         dt_store:
           type: string
           format: date-time
-          example: "2025-05-10 14:30:00"
-          description: Waktu pesan disimpan oleh client (YYYY-MM-DD HH:mm:ss).
+          example: "2025-05-14T00:48:59.975Z"
+          description: Waktu pesan disimpan oleh client (Y-m-d\TH:i:s.Z).
 
     SingleMessageResponse:
       type: object
@@ -110,8 +110,8 @@ components:
         dt_store:
           type: string
           format: date-time
-          example: "2025-05-10 15:00:00"
-          description: Waktu pesan disimpan oleh client (YYYY-MM-DD HH:mm:ss).
+          example: "2025-05-14T00:48:59.975Z"
+          description: Waktu pesan disimpan oleh client (Y-m-d\TH:i:s.Z).
 
     BulkMessageResponse:
       type: object
